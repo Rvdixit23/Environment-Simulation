@@ -3,7 +3,6 @@ import matplotlib
 import random
 import math
 
-
 def gauss_random(mean = 0, variance = 13/45):
     """
     Wrapper function for generating random numbers of the desired distribution
@@ -17,8 +16,8 @@ def exp_random():
     return np.random.gamma(1, 2.0)
 
 
-def generate_qualdict(qualities):
-    qualities = sorted(qualities, key=lambda x: sum(x))
+def generate_qualdict(qualities,chance):
+    qualities = sorted(qualities, key=lambda x: np.array(x).dot(chance))
     qualities.insert(0, [0 for i in range(len(qualities[1]))])
     return dict(zip(range(len(qualities)), qualities))
 
@@ -44,30 +43,35 @@ def food_lucky(arr, populist):
     return populist[ind]
 
 
-def mutator(val, qualities_dict, chance, adapt_percent):
-    if (random.random() < (adapt_percent / 100)):
+def mutator(val, qualities_dict, chance, mutate_percent):
+    if (random.random() < (mutate_percent / 100)):
         chance_value = np.array(qualities_dict[val]).dot(chance)
-        new_val = val
-        while (new_val < max(qualities_dict.keys())
-               and chance_value >= np.array(qualities_dict[val]).dot(chance)):
-            new_val += 1
-        return new_val
+        # new_val = val
+        # while (new_val < max(qualities_dict.keys())
+        #        and chance_value >= np.array(qualities_dict[val]).dot(chance)):
+        #     new_val += 1
+        return random.randint(max([1,val-2]),min([max(qualities_dict.keys()),val+3]))
     else:
         return val
 
 
-f = 10  # number of features
-n = 100  # initial number of beings
-per = 50  # lower percentage of population
-adapt_per = 25  # chance to mutate to an advanced specie
-epochs = 200  # number of generations
-food_lower = 80  # least amount of food
-food_higher = 120  # most amount of food
+f = 3  # number of features
+n = 300  # initial number of beings
+per = 10  # lower percentage of population
+mutate_per = 5  # chance to mutate to an advanced specie
+epochs = 1000  # number of generations
+food_lower = 180  # least amount of food
+food_higher = 360  # most amount of food
+types_of_beings=50
 
-qualities = list(
-    set([tuple([random.randint(2, 8) for i in range(f)]) for i in range(50)]))
-chance = np.reshape([random.randint(3, 6) / 10 for i in range(f)], (f, 1))
-qualities_dict = generate_qualdict(qualities)
+qualities=[]
+while(len(qualities)!=types_of_beings):
+    ele=[random.randint(2, 8) for i in range(f)]
+    if(ele not in qualities):
+        qualities.append(ele)
+
+chance = np.reshape([random.randint(3, 6) for i in range(f)], (f, 1))
+qualities_dict = generate_qualdict(qualities,chance)
 populist = init_population_generate(qualities_dict, n, per)
 
 print(chance)
@@ -81,9 +85,9 @@ food_list = [random.randint(food_lower, food_higher)
              for i in range(epochs)]  # resource available for each generation
 
 for i in range(epochs):  # number of epochs (generations)
-    if(not int(i % 100)):
+    if(not int(i % 10)):
         print("running epoch_set:", i)
-        print(populist)
+        print(sorted(populist))
         print("\n\n")
     populmatrix = np.array([qualities_dict[i] for i in populist])
     result = populmatrix.dot(chance)
@@ -94,8 +98,8 @@ for i in range(epochs):  # number of epochs (generations)
     for j in range(food_list[i]):
         new_birth = food_lucky(result_norm, populist)
         new_populist.append(
-            mutator(new_birth, qualities_dict, chance, adapt_per))
+            mutator(new_birth, qualities_dict, chance, mutate_per))
     populist = new_populist
 
 print("final_beings")
-print(populist)
+print(sorted(populist))
