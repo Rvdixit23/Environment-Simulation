@@ -1,9 +1,10 @@
 import numpy as np
-import matplotlib
+import matplotlib.pyplot as plt
 import random
 import math
 
-def gauss_random(mean = 0, variance = 13/45):
+
+def gauss_random(mean=0, variance=13 / 45):
     """
     Wrapper function for generating random numbers of the desired distribution
     Parameters : mean, variance
@@ -12,11 +13,11 @@ def gauss_random(mean = 0, variance = 13/45):
     return abs(1 - abs(random.gauss(mean, variance)))
 
 
-def exp_random():
-    return np.random.gamma(1, 2.0)
+# def exp_random():
+#     return np.random.gamma(1, 2.0)
 
 
-def generate_qualdict(qualities,chance):
+def generate_qualdict(qualities, chance):
     qualities = sorted(qualities, key=lambda x: np.array(x).dot(chance))
     qualities.insert(0, [0 for i in range(len(qualities[1]))])
     return dict(zip(range(len(qualities)), qualities))
@@ -50,7 +51,8 @@ def mutator(val, qualities_dict, chance, mutate_percent):
         # while (new_val < max(qualities_dict.keys())
         #        and chance_value >= np.array(qualities_dict[val]).dot(chance)):
         #     new_val += 1
-        return random.randint(max([1,val-2]),min([max(qualities_dict.keys()),val+3]))
+        return random.randint(max([1, val]),
+                              min([max(qualities_dict.keys()), val + 3]))
     else:
         return val
 
@@ -62,17 +64,20 @@ mutate_per = 5  # chance to mutate to an advanced specie
 epochs = 1000  # number of generations
 food_lower = 180  # least amount of food
 food_higher = 360  # most amount of food
-types_of_beings=50
+types_of_beings = 50  # max types of beings
 
-qualities=[]
-while(len(qualities)!=types_of_beings):
-    ele=[random.randint(2, 8) for i in range(f)]
-    if(ele not in qualities):
+qualities = []
+while (len(qualities) != types_of_beings):
+    ele = [random.randint(2, 8) for i in range(f)]
+    if (ele not in qualities):
         qualities.append(ele)
 
 chance = np.reshape([random.randint(3, 6) for i in range(f)], (f, 1))
-qualities_dict = generate_qualdict(qualities,chance)
+qualities_dict = generate_qualdict(qualities, chance)
 populist = init_population_generate(qualities_dict, n, per)
+init_popul_dict = dict((i, populist.count(i))
+                       for i in range(1, types_of_beings + 1)
+                       if populist.count(i))
 
 print(chance)
 print(qualities_dict)
@@ -85,7 +90,7 @@ food_list = [random.randint(food_lower, food_higher)
              for i in range(epochs)]  # resource available for each generation
 
 for i in range(epochs):  # number of epochs (generations)
-    if(not int(i % 10)):
+    if (not int(i % 10)):
         print("running epoch_set:", i)
         print(sorted(populist))
         print("\n\n")
@@ -101,5 +106,10 @@ for i in range(epochs):  # number of epochs (generations)
             mutator(new_birth, qualities_dict, chance, mutate_per))
     populist = new_populist
 
-print("final_beings")
-print(sorted(populist))
+final_popul_dict = dict((i, populist.count(i))
+                        for i in range(1, types_of_beings + 1)
+                        if populist.count(i))
+print("init_dict")
+print(init_popul_dict)
+print("final_dict")
+print(final_popul_dict)
