@@ -135,10 +135,11 @@ class Environment():
 
 if __name__ == "__main__":
     a = list()
-    for i in range(1000):
+    for i in range(10000):
         a.append(type2simulation.gauss_random())
     pyplot.hist(a, bins = 50)
-    
+    pyplot.show()
+
             
         
     

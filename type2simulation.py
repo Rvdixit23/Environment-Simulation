@@ -4,7 +4,7 @@ import random
 import math
 
 
-def gauss_random(mean=0, variance=13 / 45):
+def gauss_random(mean=0, variance=20 / 45):
     """
     Wrapper function for generating random numbers of the desired distribution
     Parameters : mean, variance
