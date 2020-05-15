@@ -18,6 +18,7 @@ class BeingBase(object):
         self.speed = featureValueList[0]
         self.intelligence = featureValueList[1]
         self.age = 0
+        self.todayFood = 0
 
     def __str__(self):
         return "Speed : {}\nIntelligence : {}".format(\
@@ -35,15 +36,20 @@ class Being(BeingBase):
         super().__init__(featureValueList)
     
 
-    def endOfDayResult(self, food):
+    def endOfDayResult(self):
         """
         Returns the action of the being
         At the end of the day depending on the food
         It had collected on that day
         """
-        if food == 2:
-            return self.reproduce()
-        elif food == 1:
+        if self.food == 2:
+            self.food = 0
+            return [self, self.reproduce()]
+        elif self.food == 1:
+            self.food = 0
+            return [self]
+        else:
+            self.food = 0
             return 0
         
     def reproduce(self, mutChance, qualityMultiplier):
@@ -101,12 +107,12 @@ class Environment():
         if not featureValues:
             for i in range(startingPopulation):
                 newBeing = Being(feature)
-                newBeing.survivalProb = newBeing.features.dot(self.chance)
+                newBeing.survivalChance = newBeing.features.dot(self.chance)
                 self.population.append(newBeing)
         elif featureValues:
             for i in range(startingPopulation):
                 newBeing = Being(featureValues[i])
-                newBeing.survivalProb = newBeing.features.dot(self.chance)
+                newBeing.survivalChance = newBeing.features.dot(self.chance)
                 self.population.append(newBeing)
         else:
             raise Exception("Wrong input parameter")
@@ -120,13 +126,28 @@ class Environment():
         """
         todayFood = self.generateFoodCount()
         self.population = sorted(self.population, \
-            key=lambda being : being.survivalProb)
+            key=lambda being : being.survivalProb, reverse=True)
+        # The most likely survivors are in the beginning of the list
         # Decide how 0, 1 or 2 food is obtained by one being
         # Calculate survivors here
-
-
-            
-
+        maxChance = max(self.population, key=lambda being : being.survivalChance)
+        minChance = min(self.population, key=lambda being : being.survivalChance)
+        for being in self.population:
+            being.relativeProb = (being.survivalChance - minChance)/(maxChance - minChance)
+        newPopulation = list()
+        acquisitionIndex = 0
+        while todayFood > 0:
+            if self.population[acquisitionIndex].relativeProb \
+                > type2simulation.gauss_random():
+                self.population[acquisitionIndex].food += 1
+                todayFood -= 1
+                acquisitionIndex += 1
+        for being in self.population:
+            beingResult = being.endOfDayResult()
+            if beingResult:
+                newPopulation.extend(beingResult)
+        self.population = newPopulation
+        
 
     def runSimulation(self, numberOfDays):
         for day in range(numberOfDays):
@@ -134,11 +155,8 @@ class Environment():
     
 
 if __name__ == "__main__":
-    a = list()
-    for i in range(10000):
-        a.append(type2simulation.gauss_random())
-    pyplot.hist(a, bins = 50)
-    pyplot.show()
+    envConfig = {}
+    env = Environment()
 
             
         
