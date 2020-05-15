@@ -1,4 +1,5 @@
 from matplotlib import pyplot
+from copy import deepcopy
 import random
 import math
 import numpy as np
@@ -14,11 +15,11 @@ class BeingBase(object):
         """
         Creates a matrix to show the features of the being
         """
-        self.features = np.array(*featureValueList)
+        self.features = np.array(featureValueList)
         self.speed = featureValueList[0]
         self.intelligence = featureValueList[1]
         self.age = 0
-        self.todayFood = 0
+        self.food = 0
 
     def __str__(self):
         return "Speed : {}\nIntelligence : {}".format(\
@@ -36,15 +37,17 @@ class Being(BeingBase):
         super().__init__(featureValueList)
     
 
-    def endOfDayResult(self):
+    def endOfDayResult(self, environment):
         """
         Returns the action of the being
         At the end of the day depending on the food
         It had collected on that day
         """
+        self.age += 1
         if self.food == 2:
             self.food = 0
-            return [self, self.reproduce()]
+            return [self, self.reproduce(\
+                environment.mutationChance, environment.qualityMultiplier)]
         elif self.food == 1:
             self.food = 0
             return [self]
@@ -52,7 +55,7 @@ class Being(BeingBase):
             self.food = 0
             return 0
         
-    def reproduce(self, mutChance, qualityMultiplier):
+    def reproduce(self, mutChance, qualityMultiplier, chance):
         """
         Reproduces a mutated being with a large chance of
         Increase in capability
@@ -62,10 +65,14 @@ class Being(BeingBase):
         if random.random() < mutationChance:
             indexOfFeature = random.choice([0, 1])
             tempList = list(self.features)
-            self.features[indexOfFeature] *= qualityMultiplier
-            return Being(tempList)
+            newBeing = Being(tempList)
+            newBeing.features[indexOfFeature] *= qualityMultiplier
+            newBeing.survivalChance = newBeing.features.dot(chance)
+            return newBeing
         else:
-            return Being(self.features)
+            newBeing = Being(self.features)
+            newBeing.survivalChance = self.survivalChance
+            return newBeing
     
 
 class Environment():
@@ -85,6 +92,8 @@ class Environment():
         """
         self.mutationChance = mutationChance
         self.qualityMultiplier = qualityMultiplier
+        self.foodCountMean = foodCountMean
+        self.foodCountVariance = foodCountVariance
         self.generateFoodCount = lambda foodCountMean, foodCountVariance: \
             random.gauss(foodCountMean, foodCountVariance)
         # self.foodRetrievalChances = foodRetrievalChances
@@ -124,39 +133,85 @@ class Environment():
         Each being gets either 0, 1, or 2 food
         Beings which get 0 die
         """
-        todayFood = self.generateFoodCount()
+        todayFood = self.generateFoodCount(self.foodCountMean, \
+            self.foodCountVariance)
+        todayFood = round(todayFood)
         self.population = sorted(self.population, \
-            key=lambda being : being.survivalProb, reverse=True)
-        # The most likely survivors are in the beginning of the list
-        # Decide how 0, 1 or 2 food is obtained by one being
-        # Calculate survivors here
-        maxChance = max(self.population, key=lambda being : being.survivalChance)
-        minChance = min(self.population, key=lambda being : being.survivalChance)
-        for being in self.population:
-            being.relativeProb = (being.survivalChance - minChance)/(maxChance - minChance)
+            key=lambda being : being.survivalChance, reverse=True)
+
+
+
+        maxChance = self.population[0].survivalChance
+        minChance = self.population[-1].survivalChance
         newPopulation = list()
         acquisitionIndex = 0
+        self.count = len(self.population)
+        if maxChance - minChance > 1:    
+            print("Percentile grade")
+            for being in self.population:
+                being.relativeProb = (being.survivalChance - minChance)/(maxChance - minChance)
+        else:
+            print("Random Grade")
+            for i in range(self.count):
+                self.population[i].relativeProb = i/self.count
+
         while todayFood > 0:
+            # print(self.population[acquisitionIndex].relativeProb \
+            #     < type2simulation.gauss_random())
             if self.population[acquisitionIndex].relativeProb \
-                > type2simulation.gauss_random():
+                < type2simulation.gauss_random():
                 self.population[acquisitionIndex].food += 1
+                acquisitionIndex = (acquisitionIndex + 1) % self.count
                 todayFood -= 1
-                acquisitionIndex += 1
+                # print(todayFood)
+        
+        
+        
+        
         for being in self.population:
-            beingResult = being.endOfDayResult()
-            if beingResult:
-                newPopulation.extend(beingResult)
-        self.population = newPopulation
+            # print(being.food)
+            if being.food >= 2:
+                newPopulation.append(being)
+                newPopulation.append(being.reproduce(self.mutationChance, \
+                    self.qualityMultiplier, self.chance))
+            elif being.food == 1:
+                newPopulation.append(being)
+            being.food = 0
+
+        # print(newPopulation)
+        self.population = deepcopy(newPopulation)
+
         
 
     def runSimulation(self, numberOfDays):
+        dataList = list()
         for day in range(numberOfDays):
-            self.runDay()
-    
+            if any(self.population):
+                self.runDay()
+            else:
+                break
+            print("Day : {}".format(day + 1))
+            dataList.append(self.count)
+        print(dataList)
+        pyplot.plot(dataList)
+        pyplot.show()
 
 if __name__ == "__main__":
-    envConfig = {}
-    env = Environment()
+    envConfig = {
+        "mutationChance" : 0.05, 
+        "qualityMultiplier" : 1.5,
+        "foodCountMean" : 100, 
+        "chanceList" : [0.3, 0.6]
+    }
+    env = Environment(**envConfig)
+    populationConfig = {
+        "startingPopulation" : 30,
+        "featureValues" : [[i, i] for i in range(30)]
+    }
+    print("Creating population ....")
+    env.createPopulation(**populationConfig)
+    print("Running simulation ....")
+    env.runSimulation(200)
 
             
         
