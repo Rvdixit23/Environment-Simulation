@@ -94,8 +94,6 @@ class Environment():
         self.qualityMultiplier = qualityMultiplier
         self.foodCountMean = foodCountMean
         self.foodCountVariance = foodCountVariance
-        self.generateFoodCount = lambda foodCountMean, foodCountVariance: \
-            random.gauss(foodCountMean, foodCountVariance)
         # self.foodRetrievalChances = foodRetrievalChances
         self.chance = np.array(chanceList)
 
@@ -133,9 +131,8 @@ class Environment():
         Each being gets either 0, 1, or 2 food
         Beings which get 0 die
         """
-        todayFood = self.generateFoodCount(self.foodCountMean, \
-            self.foodCountVariance)
-        todayFood = round(todayFood)
+        todayFood = random.gauss(self.foodCountMean, self.foodCountVariance)
+        todayFood = int(round(todayFood))
         self.population = sorted(self.population, \
             key=lambda being : being.survivalChance, reverse=True)
 
@@ -144,7 +141,7 @@ class Environment():
         maxChance = self.population[0].survivalChance
         minChance = self.population[-1].survivalChance
         newPopulation = list()
-        acquisitionIndex = 0
+
         self.count = len(self.population)
         if maxChance - minChance > 1:    
             print("Percentile grade")
@@ -154,20 +151,17 @@ class Environment():
             print("Random Grade")
             for i in range(self.count):
                 self.population[i].relativeProb = i/self.count
-
+        acquisitionIndex = 0
         while todayFood > 0:
-            # print(self.population[acquisitionIndex].relativeProb \
-            #     < type2simulation.gauss_random())
-            if self.population[acquisitionIndex].relativeProb \
-                < type2simulation.gauss_random():
-                self.population[acquisitionIndex].food += 1
-                acquisitionIndex = (acquisitionIndex + 1) % self.count
-                todayFood -= 1
-                # print(todayFood)
+            # if self.population[todayFood % self.count].relativeProb \
+            #     > type2simulation.gauss_random():
+            if self.population[todayFood % self.count].relativeProb > random.random():
+                self.population[todayFood % self.count].food += 1
+                # acquisitionIndex = (acquisitionIndex + 1) % self.count
+            todayFood = todayFood - 1
+            # print(todayFood)
         
-        
-        
-        
+
         for being in self.population:
             # print(being.food)
             if being.food >= 2:
@@ -185,6 +179,7 @@ class Environment():
 
     def runSimulation(self, numberOfDays):
         dataList = list()
+        ageList = list()
         for day in range(numberOfDays):
             if any(self.population):
                 self.runDay()
@@ -192,21 +187,27 @@ class Environment():
                 break
             print("Day : {}".format(day + 1))
             dataList.append(self.count)
+            ageList.append(sum([being.age for being in self.population])/self.count)
         print(dataList)
         pyplot.plot(dataList)
+        pyplot.plot(ageList)
+        pyplot.title("Population over time")
+        pyplot.xlabel("Time (in Units)")
+        pyplot.ylabel("Population")
         pyplot.show()
 
 if __name__ == "__main__":
     envConfig = {
         "mutationChance" : 0.05, 
-        "qualityMultiplier" : 1.5,
-        "foodCountMean" : 100, 
+        "qualityMultiplier" : 1.25,
+        "foodCountMean" : 3000, 
         "chanceList" : [0.3, 0.6]
     }
     env = Environment(**envConfig)
     populationConfig = {
-        "startingPopulation" : 30,
+        "startingPopulation" : 10,
         "featureValues" : [[i, i] for i in range(30)]
+        # "feature" : [1, 1]
     }
     print("Creating population ....")
     env.createPopulation(**populationConfig)
