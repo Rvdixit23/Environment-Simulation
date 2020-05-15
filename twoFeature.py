@@ -17,6 +17,7 @@ class BeingBase(object):
         self.features = np.array(*featureValueList)
         self.speed = featureValueList[0]
         self.intelligence = featureValueList[1]
+        self.age = 0
 
     def __str__(self):
         return "Speed : {}\nIntelligence : {}".format(\
@@ -27,14 +28,8 @@ class BeingBase(object):
 # Speed and intelligence
 mutationChance = 0.05
 qualityMultiplier = 1.1
-
-def setClassParams(mutationChance, qualityMultiplier):
-        Being.mutationChance = mutationChance
-        Being.qualityMultiplier = qualityMultiplier
         
 class Being(BeingBase):
-    
-    setClassParams()
 
     def __init__(self, featureValueList):
         super().__init__(featureValueList)
@@ -49,26 +44,101 @@ class Being(BeingBase):
         if food == 2:
             return self.reproduce()
         elif food == 1:
-            return 1
-        else:
             return 0
         
-    def reproduce(self):
+    def reproduce(self, mutChance, qualityMultiplier):
         """
         Reproduces a mutated being with a large chance of
         Increase in capability
         Chance of mutation is given by mutationChance
         Return : Being
         """
-        if random.random() < Being.mutationChance:
+        if random.random() < mutationChance:
             indexOfFeature = random.choice([0, 1])
             tempList = list(self.features)
-            self.features[indexOfFeature] *= Being.qualityMultiplier
+            self.features[indexOfFeature] *= qualityMultiplier
             return Being(tempList)
         else:
             return Being(self.features)
     
 
+class Environment():
+
+    def __init__(self, mutationChance, qualityMultiplier, \
+        foodCountMean, chanceList, foodCountVariance=0):
+        """
+        Creates and environment for running a simulation in
+        mutationChance : Probability of mutation
+        qualityMultiplier : Increase in the feature after mutation
+        foodCountMean : Mean of the food that spawns everyday
+        chanceList : The G - Matrix, representing the weightage for
+            each feature to survive
+        
+        Optional : foodCount Variance(Default : 0)
+        Returns : None
+        """
+        self.mutationChance = mutationChance
+        self.qualityMultiplier = qualityMultiplier
+        self.generateFoodCount = lambda foodCountMean, foodCountVariance: \
+            random.gauss(foodCountMean, foodCountVariance)
+        # self.foodRetrievalChances = foodRetrievalChances
+        self.chance = np.array(chanceList)
+
+    def createPopulation(self, startingPopulation, \
+        feature=None, featureValues=None):
+        """
+        Creates a population in the environment with the features
+            given
+        startingPopulation : Number of beings in the beginning of
+            the simulation
+        feature : A list if all beings have the same features
+        featureValues : A list of lists with the features
+            of each being, len(featureValues) = startingPopulation
+
+        Returns : None
+        """
+        self.population = list()
+        if not featureValues:
+            for i in range(startingPopulation):
+                newBeing = Being(feature)
+                newBeing.survivalProb = newBeing.features.dot(self.chance)
+                self.population.append(newBeing)
+        elif featureValues:
+            for i in range(startingPopulation):
+                newBeing = Being(featureValues[i])
+                newBeing.survivalProb = newBeing.features.dot(self.chance)
+                self.population.append(newBeing)
+        else:
+            raise Exception("Wrong input parameter")
+
+    def runDay(self):
+        """
+        Runs a day in the simulation
+        Generates food for the day
+        Each being gets either 0, 1, or 2 food
+        Beings which get 0 die
+        """
+        todayFood = self.generateFoodCount()
+        self.population = sorted(self.population, \
+            key=lambda being : being.survivalProb)
+        # Decide how 0, 1 or 2 food is obtained by one being
+        # Calculate survivors here
 
 
+            
+
+
+    def runSimulation(self, numberOfDays):
+        for day in range(numberOfDays):
+            self.runDay()
+    
+
+if __name__ == "__main__":
+    a = list()
+    for i in range(1000):
+        a.append(type2simulation.gauss_random())
+    pyplot.hist(a, bins = 50)
+    
+            
+        
     

@@ -88,69 +88,70 @@ food_lower = 180  # least amount of food
 food_higher = 360  # most amount of food
 types_of_beings = 50  # max types of beings
 
-# The different types of species in the system
-qualities = []
-while (len(qualities) != types_of_beings):
-    ele = [random.randint(2, 8) for i in range(f)]
-    # Each of them have 'f' features and how much a species excels in that feature
-    # is given by a number from 1 to 10
-    if (ele not in qualities):
-        qualities.append(ele)
+if __name__ == "__main__":
+    # The different types of species in the system
+    qualities = []
+    while (len(qualities) != types_of_beings):
+        ele = [random.randint(2, 8) for i in range(f)]
+        # Each of them have 'f' features and how much a species excels in that feature
+        # is given by a number from 1 to 10
+        if (ele not in qualities):
+            qualities.append(ele)
 
-# Chance matrix decides how much a feature influences the survival chance of that being
-chance = np.reshape([random.randint(3, 6) for i in range(f)], (f, 1))
-qualities_dict = generate_qualdict(qualities, chance)
-populist = init_population_generate(qualities_dict, n, per)
-init_popul_dict = dict((i, populist.count(i))
-                       for i in range(1, types_of_beings + 1)
-                       if populist.count(i))
-
-print(chance)
-print(qualities_dict)
-print("\n\n")
-print("initial_beings")
-print(populist)
-print("\n\n")
-
-food_list = [random.randint(food_lower, food_higher)
-             for i in range(epochs)]  # resource available for each generation
-
-for i in range(epochs):  # number of epochs (generations)
-    if (not int(i % 10)):
-        print("running epoch_set:", i)
-        print(sorted(populist))
-        print("\n\n")
-        # Prints the population for every 100 epochs
-
-    # populmatrix is the array of lists with each list containing the features of the species
-    # that the being belongs to
-    populmatrix = np.array([qualities_dict[i] for i in populist])
-    
-    # The produce of the chance and population matrix gives the array of the chance of survival
-    result = populmatrix.dot(chance)
-    
-    # The results of the probability is normalized to be in between 0 and 1 to use RNG to 
-    # Decide the survival of that being
-    result_norm = np.asarray(
-        np.interp(result, (result.min(), result.max()), (0, 1))).reshape(-1)
-    # print(result_norm)
-    new_populist = [0]
-    for j in range(food_list[i]):
-        # For each food item on the ith day
-
-        # Food lucky decides whether the each being in the population gets food
-        # In that particular epoch
-        new_birth = food_lucky(result_norm, populist)
-        
-        # The new_populist contains the modified species of the previous population
-        new_populist.append(
-            mutator(new_birth, qualities_dict, chance, mutate_per))
-    populist = new_populist
-
-final_popul_dict = dict((i, populist.count(i))
+    # Chance matrix decides how much a feature influences the survival chance of that being
+    chance = np.reshape([random.randint(3, 6) for i in range(f)], (f, 1))
+    qualities_dict = generate_qualdict(qualities, chance)
+    populist = init_population_generate(qualities_dict, n, per)
+    init_popul_dict = dict((i, populist.count(i))
                         for i in range(1, types_of_beings + 1)
                         if populist.count(i))
-print("init_dict")
-print(init_popul_dict)
-print("final_dict")
-print(final_popul_dict)
+
+    print(chance)
+    print(qualities_dict)
+    print("\n\n")
+    print("initial_beings")
+    print(populist)
+    print("\n\n")
+
+    food_list = [random.randint(food_lower, food_higher)
+                for i in range(epochs)]  # resource available for each generation
+
+    for i in range(epochs):  # number of epochs (generations)
+        if (not int(i % 10)):
+            print("running epoch_set:", i)
+            print(sorted(populist))
+            print("\n\n")
+            # Prints the population for every 100 epochs
+
+        # populmatrix is the array of lists with each list containing the features of the species
+        # that the being belongs to
+        populmatrix = np.array([qualities_dict[i] for i in populist])
+        
+        # The produce of the chance and population matrix gives the array of the chance of survival
+        result = populmatrix.dot(chance)
+        
+        # The results of the probability is normalized to be in between 0 and 1 to use RNG to 
+        # Decide the survival of that being
+        result_norm = np.asarray(
+            np.interp(result, (result.min(), result.max()), (0, 1))).reshape(-1)
+        # print(result_norm)
+        new_populist = [0]
+        for j in range(food_list[i]):
+            # For each food item on the ith day
+
+            # Food lucky decides whether the each being in the population gets food
+            # In that particular epoch
+            new_birth = food_lucky(result_norm, populist)
+            
+            # The new_populist contains the modified species of the previous population
+            new_populist.append(
+                mutator(new_birth, qualities_dict, chance, mutate_per))
+        populist = new_populist
+
+    final_popul_dict = dict((i, populist.count(i))
+                            for i in range(1, types_of_beings + 1)
+                            if populist.count(i))
+    print("init_dict")
+    print(init_popul_dict)
+    print("final_dict")
+    print(final_popul_dict)
