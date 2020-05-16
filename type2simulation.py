@@ -1,7 +1,9 @@
 import numpy as np
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt 
+from matplotlib import pylab as pylab
 import random
 import math
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def gauss_random(mean=0, variance=13 / 45):
@@ -107,9 +109,10 @@ mutate_per = 1  # chance to mutate to an advanced specie
 epochs = 1000  # number of generations
 food_lower = 180  # least amount of food
 food_higher = 360  # most amount of food
-types_of_beings = 100  # max types of beings
+types_of_beings = 50  # max types of beings
 
 if __name__ == "__main__":
+    histogramData = list()
     # The different types of species in the system
     qualities = []
     while (len(qualities) != types_of_beings):
@@ -138,12 +141,23 @@ if __name__ == "__main__":
     food_list = [
         random.randint(food_lower, food_higher) for i in range(epochs)
     ]  # resource available for each generation
-
-    for i in range(epochs):  # number of epochs (generations)
-        if (not int(i % 10)):
-            print("running epoch_set:", i)
-            print(sorted(populist))
-            print("\n\n")
+    barHeights = list()
+    for i in range(epochs + 1):  # number of epochs (generations)
+        if (not int(i % 100) and i > 0):
+            final_popul_dict = dict((i, populist.count(i))
+                            for i in range(1, types_of_beings + 1)
+                            if populist.count(i))
+            print("Running epoch_set:", i)
+            print(final_popul_dict)
+            plotData = sorted(populist)
+            for i in range(types_of_beings):
+                if final_popul_dict.get(i):
+                    barHeights.append(final_popul_dict[i])
+                else:
+                    barHeights.append(0)
+            # histogramData.append(plotData)
+            # print(plotData)
+            # print("\n\n")
             # Prints the population for every 100 epochs
 
         # populmatrix is the array of lists with each list containing the features of the species
@@ -173,10 +187,32 @@ if __name__ == "__main__":
                         ones_mat))
         populist = new_populist
 
-    final_popul_dict = dict((i, populist.count(i))
-                            for i in range(1, types_of_beings + 1)
-                            if populist.count(i))
-    print("init_dict")
-    print(init_popul_dict)
-    print("final_dict")
-    print(final_popul_dict)
+        
+    
+
+    # histogramData.append(final_popul_dict.copy())
+    # print(plotData)
+    # print("init_dict")
+    # print(init_popul_dict)
+    # print("final_dict")
+    # print(final_popul_dict)
+    fig = pylab.figure()
+    ax = Axes3D(fig)
+    x = list()
+    y = list()
+    for day in range(10):
+        for species in range(types_of_beings):
+            y.append(day)
+            x.append(species)
+    z = [0 for i in range(10*types_of_beings)]
+    dx = 1
+    dy = 1
+    dz = barHeights
+    x = np.array(x)
+    y = np.array(y)
+    ax.set_xlabel("Species Index")
+    ax.set_ylabel("Time")
+    ax.set_zlabel("Population")
+    print(dz)
+    ax.bar3d(x, y, z, dx, dy, dz, shade=True)
+    plt.show()

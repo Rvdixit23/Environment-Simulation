@@ -28,8 +28,6 @@ class BeingBase(object):
 # chance = np.array([0.2, 0.8])
 # Weights for the increase in survival chance for 
 # Speed and intelligence
-mutationChance = 0.05
-qualityMultiplier = 1.1
         
 class Being(BeingBase):
 
@@ -62,7 +60,7 @@ class Being(BeingBase):
         Chance of mutation is given by mutationChance
         Return : Being
         """
-        if random.random() < mutationChance:
+        if random.random() < mutChance:
             indexOfFeature = random.choice([0, 1])
             tempList = list(self.features)
             newBeing = Being(tempList)
@@ -199,7 +197,7 @@ class Environment():
 if __name__ == "__main__":
     envConfig = {
         "mutationChance" : 0.05, 
-        "qualityMultiplier" : 1.25,
+        "qualityMultiplier" : 1.1,
         "foodCountMean" : 3000, 
         "chanceList" : [0.3, 0.6]
     }
