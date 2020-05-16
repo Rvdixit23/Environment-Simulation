@@ -1,9 +1,13 @@
+# %%
 import numpy as np
-from matplotlib import pyplot as plt 
+from matplotlib import pyplot as plt
 from matplotlib import pylab as pylab
 import random
 import math
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+
+# %%
 
 
 def gauss_random(mean=0, variance=13 / 45):
@@ -91,13 +95,13 @@ def generate_chance(f, maind_low, maind_high, rel_low, rel_high):
     relative-dependency-low to relative-dependency-high are the side effects
     an environment condition on other features
     """
-    chance=np.diag(np.ones(f))
+    chance = np.diag(np.ones(f))
     for i in range(f):
         for j in range(f):
-            if(chance[i,j]):
-                chance[i,j]=random.randint(maind_low,maind_high)
+            if (chance[i, j]):
+                chance[i, j] = random.randint(maind_low, maind_high)
             else:
-                chance[i,j]=random.randint(rel_low,rel_high)
+                chance[i, j] = random.randint(rel_low, rel_high)
     return chance
 
 
@@ -123,7 +127,7 @@ if __name__ == "__main__":
 
     # Chance matrix decides how much a feature influences the survival chance of that being
     ones_mat = np.ones((f, 1))
-    chance = generate_chance(f, 3,6,-1,1)
+    chance = generate_chance(f, 3, 6, -1, 1)
     qualities_dict = generate_qualdict(qualities, chance, ones_mat)
     populist = init_population_generate(qualities_dict, n, per)
     init_popul_dict = dict((i, populist.count(i))
@@ -144,8 +148,8 @@ if __name__ == "__main__":
     for i in range(epochs + 1):  # number of epochs (generations)
         if (not int(i % 100) and i > 0):
             final_popul_dict = dict((i, populist.count(i))
-                            for i in range(1, types_of_beings + 1)
-                            if populist.count(i))
+                                    for i in range(1, types_of_beings + 1)
+                                    if populist.count(i))
             print("Running epoch_set:", i)
             print(final_popul_dict)
             plotData = sorted(populist)
@@ -186,15 +190,13 @@ if __name__ == "__main__":
                         ones_mat))
         populist = new_populist
 
-        
-    
-
     # histogramData.append(final_popul_dict.copy())
     # print(plotData)
     # print("init_dict")
     # print(init_popul_dict)
     # print("final_dict")
     # print(final_popul_dict)
+# %%
     fig = pylab.figure()
     ax = Axes3D(fig)
     x = list()
@@ -203,14 +205,21 @@ if __name__ == "__main__":
         for species in range(types_of_beings):
             y.append(day)
             x.append(species)
-    z = [0 for i in range(10*types_of_beings)]
+    z = [0 for i in range(10 * types_of_beings)]
     dx = 1
     dy = 1
-    dz = barHeights
+    dz = np.array(barHeights)
     x = np.array(x)
     y = np.array(y)
     ax.set_xlabel("Species Index")
     ax.set_ylabel("Time")
     ax.set_zlabel("Population")
-    ax.bar3d(x, y, z, dx, dy, dz, shade=True)
+    values=(dz-dz.min())/np.float_(dz.max()-dz.min())
+    colors = cm.gist_heat(values)
+    #colors = cm.gnuplot2(values)
+    #colors = cm.rainbow(values)
+    ax.bar3d(x, y, z, dx, dy, dz, shade=True,color=colors)
     plt.show()
+
+
+# %%
