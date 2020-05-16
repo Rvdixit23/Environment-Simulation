@@ -98,7 +98,6 @@ def generate_chance(f, maind_low, maind_high, rel_low, rel_high):
                 chance[i,j]=random.randint(maind_low,maind_high)
             else:
                 chance[i,j]=random.randint(rel_low,rel_high)
-    print(chance)
     return chance
 
 
@@ -213,6 +212,5 @@ if __name__ == "__main__":
     ax.set_xlabel("Species Index")
     ax.set_ylabel("Time")
     ax.set_zlabel("Population")
-    print(dz)
     ax.bar3d(x, y, z, dx, dy, dz, shade=True)
     plt.show()
