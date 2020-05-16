@@ -17,7 +17,7 @@ def gauss_random(mean=0, variance=13 / 45):
 #     return np.random.gamma(1, 2.0)
 
 
-def generate_qualdict(qualities, chance):
+def generate_qualdict(qualities, chance, ones_mat):
     """
     This function returns the dictionary of the different species
     Keys of the dictionary shows how good the species is
@@ -25,7 +25,8 @@ def generate_qualdict(qualities, chance):
     Input : List of tuples containing the rating for each feature of the species
     Output : Dictionary as specified above
     """
-    qualities = sorted(qualities, key=lambda x: np.array(x).dot(chance))
+    qualities = sorted(qualities,
+                       key=lambda x: np.array(x).dot(chance).dot(ones_mat))
     qualities.insert(0, [0 for i in range(len(qualities[1]))])
     return dict(zip(range(len(qualities)), qualities))
 
@@ -66,9 +67,9 @@ def food_lucky(arr, populist):
     return populist[ind]
 
 
-def mutator(val, qualities_dict, chance, mutate_percent):
+def mutator(val, qualities_dict, chance, mutate_percent, ones_mat):
     if (random.random() < (mutate_percent / 100)):
-        chance_value = np.array(qualities_dict[val]).dot(chance)
+        chance_value = np.array(qualities_dict[val]).dot(chance).dot(ones_mat)
         # new_val = val
         # while (new_val < max(qualities_dict.keys())
         #        and chance_value >= np.array(qualities_dict[val]).dot(chance)):
@@ -79,14 +80,34 @@ def mutator(val, qualities_dict, chance, mutate_percent):
         return val
 
 
+def generate_chance(f, maind_low, maind_high, rel_low, rel_high):
+    """
+    generates the conditional matrix of the given world on its impacts
+    on the beings of the system on each feature
+    main-dependency-low to main-dependency-high are the diagonal elements
+    which have greater impact on the corresponding feature
+    relative-dependency-low to relative-dependency-high are the side effects
+    an environment condition on other features
+    """
+    chance=np.diag(np.ones(f))
+    for i in range(f):
+        for j in range(f):
+            if(chance[i,j]):
+                chance[i,j]=random.randint(maind_low,maind_high)
+            else:
+                chance[i,j]=random.randint(rel_low,rel_high)
+    print(chance)
+    return chance
+
+
 f = 3  # number of features
 n = 300  # initial number of beings
-per = 10  # lower percentage of population
-mutate_per = 5  # chance to mutate to an advanced specie
+per = 5  # lower percentage of population
+mutate_per = 1  # chance to mutate to an advanced specie
 epochs = 1000  # number of generations
 food_lower = 180  # least amount of food
 food_higher = 360  # most amount of food
-types_of_beings = 50  # max types of beings
+types_of_beings = 100  # max types of beings
 
 if __name__ == "__main__":
     # The different types of species in the system
@@ -99,12 +120,13 @@ if __name__ == "__main__":
             qualities.append(ele)
 
     # Chance matrix decides how much a feature influences the survival chance of that being
-    chance = np.reshape([random.randint(3, 6) for i in range(f)], (f, 1))
-    qualities_dict = generate_qualdict(qualities, chance)
+    ones_mat = np.ones((f, 1))
+    chance = generate_chance(f, 3,6,-1,1)
+    qualities_dict = generate_qualdict(qualities, chance, ones_mat)
     populist = init_population_generate(qualities_dict, n, per)
     init_popul_dict = dict((i, populist.count(i))
-                        for i in range(1, types_of_beings + 1)
-                        if populist.count(i))
+                           for i in range(1, types_of_beings + 1)
+                           if populist.count(i))
 
     print(chance)
     print(qualities_dict)
@@ -113,8 +135,9 @@ if __name__ == "__main__":
     print(populist)
     print("\n\n")
 
-    food_list = [random.randint(food_lower, food_higher)
-                for i in range(epochs)]  # resource available for each generation
+    food_list = [
+        random.randint(food_lower, food_higher) for i in range(epochs)
+    ]  # resource available for each generation
 
     for i in range(epochs):  # number of epochs (generations)
         if (not int(i % 10)):
@@ -126,14 +149,15 @@ if __name__ == "__main__":
         # populmatrix is the array of lists with each list containing the features of the species
         # that the being belongs to
         populmatrix = np.array([qualities_dict[i] for i in populist])
-        
+
         # The produce of the chance and population matrix gives the array of the chance of survival
-        result = populmatrix.dot(chance)
-        
-        # The results of the probability is normalized to be in between 0 and 1 to use RNG to 
+        result = populmatrix.dot(chance).dot(ones_mat)
+
+        # The results of the probability is normalized to be in between 0 and 1 to use RNG to
         # Decide the survival of that being
         result_norm = np.asarray(
-            np.interp(result, (result.min(), result.max()), (0, 1))).reshape(-1)
+            np.interp(result, (result.min(), result.max()),
+                      (0, 1))).reshape(-1)
         # print(result_norm)
         new_populist = [0]
         for j in range(food_list[i]):
@@ -142,10 +166,11 @@ if __name__ == "__main__":
             # Food lucky decides whether the each being in the population gets food
             # In that particular epoch
             new_birth = food_lucky(result_norm, populist)
-            
+
             # The new_populist contains the modified species of the previous population
             new_populist.append(
-                mutator(new_birth, qualities_dict, chance, mutate_per))
+                mutator(new_birth, qualities_dict, chance, mutate_per,
+                        ones_mat))
         populist = new_populist
 
     final_popul_dict = dict((i, populist.count(i))
