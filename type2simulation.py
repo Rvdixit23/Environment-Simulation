@@ -192,10 +192,39 @@ if __name__ == "__main__":
 
     # histogramData.append(final_popul_dict.copy())
     # print(plotData)
-    # print("init_dict")
-    # print(init_popul_dict)
-    # print("final_dict")
-    # print(final_popul_dict)
+    print("init_dict")
+    print(init_popul_dict)
+    print("final_dict")
+    print(final_popul_dict)
+# %%
+    init_keys=[i for i in range(types_of_beings)]
+    init_val=[]
+    for i in range(types_of_beings):
+        if(i in init_popul_dict):
+            init_val.append(init_popul_dict[i])
+        else:
+            init_val.append(0)
+    dz=np.array(init_val)
+    colors=cm.gnuplot((dz-dz.min())/np.float_(dz.max()-dz.min()))
+    plt.bar(init_keys,init_val,color=colors)
+    plt.xlabel("Being Types (sorted based on profitable traits)")
+    plt.ylabel("Number of Beings")
+    #plt.savefig("plot_init.png")
+    plt.show()
+    final_keys=[i for i in range(types_of_beings)]
+    final_val=[]
+    for i in range(types_of_beings):
+        if(i in final_popul_dict):
+            final_val.append(final_popul_dict[i])
+        else:
+            final_val.append(0)
+    dz=np.array(final_val)
+    colors=cm.gnuplot((dz-dz.min())/np.float_(dz.max()-dz.min()))
+    plt.bar(final_keys,final_val,color=colors)
+    plt.xlabel("Being Types (sorted based on profitable traits)")
+    plt.ylabel("Number of Beings")
+    #plt.savefig("plot_final.png")
+    plt.show()
 # %%
     fig = pylab.figure()
     ax = Axes3D(fig)
